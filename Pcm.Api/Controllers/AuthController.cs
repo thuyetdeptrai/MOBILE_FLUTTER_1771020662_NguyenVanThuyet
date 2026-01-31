@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Pcm.Api.Data;
-using Pcm.Api.Entities;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
+using Pcm.Api.Data;
+using Pcm.Api.Entities;
 
 namespace Pcm.Api.Controllers
 {
@@ -13,77 +13,124 @@ namespace Pcm.Api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        // 1. Khai báo đúng các biến cần dùng
-        private readonly UserManager<IdentityUser> _userManager; // Dùng IdentityUser chuẩn
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly UserManager<Member> _userManager;
+        private readonly SignInManager<Member> _signInManager;
         private readonly IConfiguration _configuration;
-        private readonly ApplicationDbContext _context; // <--- Đã thêm biến này
+        private readonly ApplicationDbContext _context;
 
-        // 2. Inject (Tiêm) vào Constructor
         public AuthController(
-            UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager,
+            UserManager<Member> userManager,
+            SignInManager<Member> signInManager,
             IConfiguration configuration,
-            ApplicationDbContext context) // <--- Nhận context từ đây
+            ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
-            _context = context; // <--- Gán giá trị
+            _context = context;
         }
 
-        // 3. API Đăng Ký (Code đã sửa khớp với Member Entity)
+        // API Đăng Ký - Tạo Member trực tiếp (vì Member kế thừa IdentityUser)
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest req)
         {
-            // Tạo tài khoản đăng nhập (IdentityUser)
-            var user = new IdentityUser { UserName = req.Username, Email = req.Email };
-            var result = await _userManager.CreateAsync(user, req.Password);
-
-            if (!result.Succeeded) return BadRequest(result.Errors);
-
-            // Tạo hồ sơ thành viên (Member)
+            // Tạo Member (bao gồm cả Identity fields)
             var member = new Member
             {
-                Id = user.Id,       // Id member trùng Id user
-                UserId = user.Id,   // Link với bảng User
+                UserName = req.Username,
+                Email = req.Email,
                 FullName = req.FullName,
-                Tier = Tier.Bronze, // Enum chuẩn
+                Tier = Tier.Bronze,
                 JoinDate = DateTime.Now,
                 WalletBalance = 0,
-                IsActive = true,    // Dùng IsActive thay vì Status
                 RankLevel = 0
             };
 
-            _context.Members.Add(member);
-            await _context.SaveChangesAsync();
+            var result = await _userManager.CreateAsync(member, req.Password);
+
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            // Gán role Member
+            await _userManager.AddToRoleAsync(member, "Member");
 
             return Ok(new { Message = "Đăng ký thành công!" });
         }
 
-        // 4. API Đăng Nhập (Giữ nguyên hoặc dùng code cũ của bạn)
+        // API Đăng Nhập
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, false, false);
-            if (result.Succeeded)
+            try
             {
-                var user = await _userManager.FindByNameAsync(model.Username);
-                // Tìm thông tin Member để lấy FullName
-                var member = _context.Members.FirstOrDefault(m => m.UserId == user.Id);
+                var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, false, false);
                 
-                return Ok(new 
-                { 
-                    UserId = user.Id,
-                    FullName = member?.FullName ?? user.UserName, // Nếu chưa có member thì lấy username đỡ
-                    Token = "fake-jwt-token-for-now" 
-                });
+                if (result.Succeeded)
+                {
+                    var member = await _userManager.FindByNameAsync(model.Username);
+                    var roles = await _userManager.GetRolesAsync(member!);
+                    
+                    // Generate JWT Token
+                    var token = GenerateJwtToken(member!, roles);
+
+                    return Ok(new
+                    {
+                        UserId = member!.Id,
+                        Username = member.UserName,
+                        FullName = member.FullName,
+                        Email = member.Email,
+                        Role = roles.FirstOrDefault() ?? "Member",
+                        Tier = member.Tier.ToString(),
+                        WalletBalance = member.WalletBalance,
+                        RankLevel = member.RankLevel,
+                        Token = token
+                    });
+                }
+                
+                return Unauthorized("Sai tài khoản hoặc mật khẩu");
             }
-            return Unauthorized("Sai tài khoản hoặc mật khẩu");
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi Đăng nhập: {ex.Message} | Stack: {ex.StackTrace}");
+            }
+        }
+        
+        private string GenerateJwtToken(Member member, IList<string> roles)
+        {
+            var jwtKey = _configuration["Jwt:Key"] ?? "PcmPickleballSuperSecretKey12345678!";
+            var jwtIssuer = _configuration["Jwt:Issuer"] ?? "PcmApi";
+            var jwtAudience = _configuration["Jwt:Audience"] ?? "PcmMobile";
+            
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, member.Id),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, member.Id),
+                new Claim(ClaimTypes.Name, member.UserName ?? ""),
+                new Claim(ClaimTypes.Email, member.Email ?? "")
+            };
+            
+            // Add role claims
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+            
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            
+            var token = new JwtSecurityToken(
+                issuer: jwtIssuer,
+                audience: jwtAudience,
+                claims: claims,
+                expires: DateTime.Now.AddDays(7), // Token hết hạn sau 7 ngày
+                signingCredentials: creds
+            );
+            
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 
-    // Các class phụ trợ
     public class RegisterRequest
     {
         public string Username { get; set; } = string.Empty;
@@ -94,7 +141,7 @@ namespace Pcm.Api.Controllers
 
     public class LoginModel
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }

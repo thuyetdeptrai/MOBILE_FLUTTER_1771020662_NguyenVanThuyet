@@ -1,49 +1,72 @@
 using Microsoft.EntityFrameworkCore;
 using Pcm.Api.Data;
 using Pcm.Api.Entities;
+using Microsoft.AspNetCore.SignalR;
+using Pcm.Api.Hubs;
 
 namespace Pcm.Api.Services
 {
     public class AutoCancelService : BackgroundService
     {
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceProvider _services;
+        private readonly ILogger<AutoCancelService> _logger;
 
-        public AutoCancelService(IServiceProvider serviceProvider)
+        public AutoCancelService(IServiceProvider services, ILogger<AutoCancelService> logger)
         {
-            _serviceProvider = serviceProvider;
+            _services = services;
+            _logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _logger.LogInformation("AutoCancelService is starting.");
+
             while (!stoppingToken.IsCancellationRequested)
             {
-                // Chạy mỗi 1 phút
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-                await CancelUnpaidBookings();
+                try
+                {
+                    await DoWork(stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error occurred in AutoCancelService.");
+                }
+
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Chạy mỗi phút
             }
+
+            _logger.LogInformation("AutoCancelService is stopping.");
         }
 
-        private async Task CancelUnpaidBookings()
+        private async Task DoWork(CancellationToken stoppingToken)
         {
-            using (var scope = _serviceProvider.CreateScope())
+            using (var scope = _services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var hubContext = scope.ServiceProvider.GetRequiredService<IHubContext<PcmHub>>();
 
-                // Tìm các đơn đặt sân "PendingPayment" quá 5 phút
-                var limitTime = DateTime.Now.AddMinutes(-5);
-                
-                var expiredBookings = await context.Bookings
-                    .Where(b => b.Status == BookingStatus.PendingPayment && b.CreatedDate < limitTime)
+                var now = DateTime.Now;
+                var expiredHolds = await context.Bookings
+                    .Where(b => b.Status == BookingStatus.Holding && b.HoldExpiry < now)
                     .ToListAsync();
 
-                if (expiredBookings.Any())
+                if (expiredHolds.Any())
                 {
-                    foreach (var booking in expiredBookings)
+                    _logger.LogInformation("Found {Count} expired holds. Releasing...", expiredHolds.Count);
+
+                    foreach (var hold in expiredHolds)
                     {
-                        booking.Status = BookingStatus.Cancelled;
+                        context.Bookings.Remove(hold);
+                        
+                        // Thông báo real-time qua SignalR
+                        await hubContext.Clients.All.SendAsync("ReceiveSlotRelease", new { 
+                            hold.CourtId, 
+                            BookingDate = hold.BookingDate.ToString("yyyy-MM-dd"),
+                            hold.StartTime
+                        });
                     }
+
                     await context.SaveChangesAsync();
-                    Console.WriteLine($"[AUTO] Đã hủy {expiredBookings.Count} đơn đặt sân quá hạn.");
                 }
             }
         }

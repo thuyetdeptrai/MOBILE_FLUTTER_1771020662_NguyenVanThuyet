@@ -12,8 +12,8 @@ using Pcm.Api.Data;
 namespace Pcm.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260127090118_AddTournaments")]
-    partial class AddTournaments
+    [Migration("20260130211351_AddNewsAndNotifications")]
+    partial class AddNewsAndNotifications
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,7 +49,7 @@ namespace Pcm.Api.Migrations
                         .HasDatabaseName("RoleNameIndex")
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -74,7 +74,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
+                    b.ToTable("RoleClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -99,7 +99,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
+                    b.ToTable("UserClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -121,7 +121,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
+                    b.ToTable("UserLogins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -136,7 +136,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
+                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -155,7 +155,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
+                    b.ToTable("UserTokens", (string)null);
                 });
 
             modelBuilder.Entity("Pcm.Api.Entities.Booking", b =>
@@ -166,27 +166,36 @@ namespace Pcm.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("CourtId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EndTime")
-                        .HasColumnType("datetime2");
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("bit");
 
                     b.Property<string>("MemberId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("ParentBookingId")
+                    b.Property<DateTime?>("RecurrenceEnd")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("RecurrenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("RecurrenceType")
                         .HasColumnType("int");
 
-                    b.Property<string>("RecurrenceRule")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime2");
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -199,8 +208,6 @@ namespace Pcm.Api.Migrations
                     b.HasIndex("CourtId");
 
                     b.HasIndex("MemberId");
-
-                    b.HasIndex("ParentBookingId");
 
                     b.ToTable("Bookings");
                 });
@@ -229,30 +236,6 @@ namespace Pcm.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Courts");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            IsActive = true,
-                            Name = "Sân 1 (Trong nhà)",
-                            PricePerHour = 150000m
-                        },
-                        new
-                        {
-                            Id = 2,
-                            IsActive = true,
-                            Name = "Sân 2 (Trong nhà)",
-                            PricePerHour = 150000m
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Sân thảm chuẩn quốc tế",
-                            IsActive = true,
-                            Name = "Sân VIP",
-                            PricePerHour = 250000m
-                        });
                 });
 
             modelBuilder.Entity("Pcm.Api.Entities.Member", b =>
@@ -346,6 +329,87 @@ namespace Pcm.Api.Migrations
                     b.ToTable("662_Members", (string)null);
                 });
 
+            modelBuilder.Entity("Pcm.Api.Entities.News", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("News");
+                });
+
+            modelBuilder.Entity("Pcm.Api.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MemberId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ReferenceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("Pcm.Api.Entities.Tournament", b =>
                 {
                     b.Property<int>("Id")
@@ -381,19 +445,6 @@ namespace Pcm.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Tournaments");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Giải đấu mở rộng dành cho mọi lứa tuổi.",
-                            EntryFee = 200000m,
-                            MaxParticipants = 16,
-                            Name = "Pickleball Open Cup 2026",
-                            PrizePool = 5000000m,
-                            StartDate = new DateTime(2026, 2, 6, 16, 1, 17, 709, DateTimeKind.Local).AddTicks(8428),
-                            Status = "Open"
-                        });
                 });
 
             modelBuilder.Entity("Pcm.Api.Entities.TournamentParticipant", b =>
@@ -406,7 +457,7 @@ namespace Pcm.Api.Migrations
 
                     b.Property<string>("MemberId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
@@ -419,6 +470,8 @@ namespace Pcm.Api.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
 
                     b.HasIndex("TournamentId");
 
@@ -440,14 +493,12 @@ namespace Pcm.Api.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MemberId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int?>("RelatedBookingId")
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -457,9 +508,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MemberId");
-
-                    b.ToTable("662_WalletTransactions", (string)null);
+                    b.ToTable("WalletTransactions");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -522,35 +571,29 @@ namespace Pcm.Api.Migrations
                         .IsRequired();
 
                     b.HasOne("Pcm.Api.Entities.Member", "Member")
-                        .WithMany("Bookings")
+                        .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Pcm.Api.Entities.Booking", "ParentBooking")
-                        .WithMany()
-                        .HasForeignKey("ParentBookingId");
 
                     b.Navigation("Court");
 
                     b.Navigation("Member");
-
-                    b.Navigation("ParentBooking");
                 });
 
-            modelBuilder.Entity("Pcm.Api.Entities.TournamentParticipant", b =>
+            modelBuilder.Entity("Pcm.Api.Entities.News", b =>
                 {
-                    b.HasOne("Pcm.Api.Entities.Tournament", null)
-                        .WithMany("Participants")
-                        .HasForeignKey("TournamentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("Pcm.Api.Entities.Member", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId");
+
+                    b.Navigation("Author");
                 });
 
-            modelBuilder.Entity("Pcm.Api.Entities.WalletTransaction", b =>
+            modelBuilder.Entity("Pcm.Api.Entities.Notification", b =>
                 {
                     b.HasOne("Pcm.Api.Entities.Member", "Member")
-                        .WithMany("Transactions")
+                        .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -558,11 +601,23 @@ namespace Pcm.Api.Migrations
                     b.Navigation("Member");
                 });
 
-            modelBuilder.Entity("Pcm.Api.Entities.Member", b =>
+            modelBuilder.Entity("Pcm.Api.Entities.TournamentParticipant", b =>
                 {
-                    b.Navigation("Bookings");
+                    b.HasOne("Pcm.Api.Entities.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("Transactions");
+                    b.HasOne("Pcm.Api.Entities.Tournament", "Tournament")
+                        .WithMany("Participants")
+                        .HasForeignKey("TournamentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+
+                    b.Navigation("Tournament");
                 });
 
             modelBuilder.Entity("Pcm.Api.Entities.Tournament", b =>

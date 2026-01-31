@@ -154,3 +154,17 @@ N:\Pickleball\Pcm.Api\obj\Debug\net9.0\refint\Pcm.Api.dll
 N:\Pickleball\Pcm.Api\obj\Debug\net9.0\Pcm.Api.pdb
 N:\Pickleball\Pcm.Api\obj\Debug\net9.0\Pcm.Api.genruntimeconfig.cache
 N:\Pickleball\Pcm.Api\obj\Debug\net9.0\ref\Pcm.Api.dll
+N:\Pickleball\Pcm.Api\obj\Debug\net9.0\Pcm.Api.sourcelink.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\web.config
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\appsettings.Development.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\appsettings.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\Pcm.Api.deps.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\Pcm.Api.runtimeconfig.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\Pcm.Api.staticwebassets.endpoints.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\publish\web.config
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\publish\appsettings.Development.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\publish\appsettings.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\publish\Pcm.Api.deps.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\publish\Pcm.Api.runtimeconfig.json
+N:\Pickleball\Pcm.Api\bin\Debug\net9.0\publish\publish\Pcm.Api.staticwebassets.endpoints.json

@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:signalr_netcore/signalr_netcore.dart'; // <--- Thư viện Real-time
+import 'package:provider/provider.dart';
+import 'dart:async';
+import '../core/services/notification_service.dart';
+// import 'package:signalr_netcore/signalr_netcore.dart'; // TODO: Re-enable when SignalR fixed
 
 class WalletScreen extends StatefulWidget {
   final String userId;
@@ -14,6 +17,8 @@ class WalletScreen extends StatefulWidget {
   State<WalletScreen> createState() => _WalletScreenState();
 }
 
+
+
 class _WalletScreenState extends State<WalletScreen> {
   double balance = 0;
   List<dynamic> history = [];
@@ -22,69 +27,39 @@ class _WalletScreenState extends State<WalletScreen> {
 
   File? _selectedImage;
   bool isUploading = false;
-
-  // Biến SignalR
-  late HubConnection hubConnection;
+  
+  StreamSubscription? _balanceSubscription;
 
   @override
   void initState() {
     super.initState();
     fetchWalletInfo();
-    initSignalR(); // <--- Kích hoạt Real-time
+    
+    // Subscribe to balance updates from NotificationService
+    final notificationService = context.read<NotificationService>();
+    _balanceSubscription = notificationService.onBalanceChanged.listen((newBalance) {
+       if (mounted) {
+         setState(() {
+            balance = newBalance;
+         });
+         // Also refresh history to show the new transaction
+         fetchWalletInfo();
+         
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text('Số dư đã được cập nhật: $newBalanceđ'), backgroundColor: Colors.green),
+         );
+       }
+    });
   }
 
   @override
   void dispose() {
-    hubConnection.stop(); // Tắt kết nối khi thoát màn hình
+    _balanceSubscription?.cancel();
     super.dispose();
   }
 
-  // --- KẾT NỐI REAL-TIME (QUAN TRỌNG) ---
-  Future<void> initSignalR() async {
-    // Lưu ý: Nếu chạy máy ảo Android thì đổi localhost thành 10.0.2.2
-    const serverUrl = "http://localhost:5176/pcmHub";
-
-    hubConnection = HubConnectionBuilder().withUrl(serverUrl).build();
-
-    // 1. Kết nối đến Server
-    await hubConnection.start();
-    print("SignalR Connected!");
-
-    // 2. Báo danh với Server (Join Room theo UserId)
-    await hubConnection.invoke("JoinRoom", args: [widget.userId]);
-
-    // 3. Lắng nghe sự kiện "ReceiveNotification" từ Server
-    hubConnection.on("ReceiveNotification", (arguments) {
-      final message = arguments![0] as String;
-      final newBalance = (arguments[1] as num).toDouble();
-
-      // Cập nhật giao diện ngay lập tức
-      if (mounted) {
-        setState(() {
-          balance = newBalance; // Nhảy số dư mới
-        });
-
-        // Hiện thông báo (SnackBar)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 10),
-                Expanded(child: Text(message)),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-
-        // Tải lại lịch sử để hiện dòng "Thành công"
-        fetchWalletInfo();
-      }
-    });
-  }
-  // ---------------------------------------
+  // --- Real-time disabled temporarily ---
+  // Future<void> initSignalR() async { ... }
 
   Future<void> fetchWalletInfo() async {
     final url = Uri.parse('http://localhost:5176/api/Wallet/${widget.userId}');
@@ -101,8 +76,8 @@ class _WalletScreenState extends State<WalletScreen> {
         }
       }
     } catch (e) {
-      print(e);
-      setState(() => isLoading = false);
+      debugPrint('Wallet fetch error: $e');
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -126,7 +101,7 @@ class _WalletScreenState extends State<WalletScreen> {
       final response = await http.Response.fromStream(streamed);
       if (response.statusCode == 200) return jsonDecode(response.body)['url'];
     } catch (e) {
-      print(e);
+      debugPrint('Upload error: $e');
     }
     return null;
   }
@@ -167,7 +142,7 @@ class _WalletScreenState extends State<WalletScreen> {
         fetchWalletInfo();
       }
     } catch (e) {
-      print(e);
+      debugPrint('Deposit error: $e');
     }
   }
 
@@ -251,7 +226,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text(
+                      const Text(
                         "Số dư khả dụng",
                         style: TextStyle(color: Colors.white70),
                       ),
@@ -262,7 +237,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                         ),
-                      ), // <--- SỐ NÀY SẼ TỰ NHẢY
+                      ),
                       const SizedBox(height: 20),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.add_card),

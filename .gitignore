@@ -1,0 +1,30 @@
+# .NET Core
+bin/
+obj/
+publish/
+publish_linux/
+*.zip
+appsettings.Development.json
+
+# Flutter
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+*.apk
+*.aab
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets & SSH (IMPORTANT)
+temp_key
+temp_key.pub
+setup_ssh.py
+setup_vps.sh
+pcm_api_linux.zip
+appsettings.prod.json
+pcm-api.service
+pcm-api.nginx

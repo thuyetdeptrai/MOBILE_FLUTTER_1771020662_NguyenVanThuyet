@@ -1,0 +1,13 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+N:\Pickleball\Pcm.Api\Controllers\MatchesController.cs(31,25): error CS0104: 'MatchType' is an ambiguous reference between 'Pcm.Api.Entities.MatchType' and 'System.IO.MatchType' [N:\Pickleball\Pcm.Api\Pcm.Api.csproj]
+N:\Pickleball\Pcm.Api\Controllers\MatchesController.cs(341,16): error CS0104: 'MatchType' is an ambiguous reference between 'Pcm.Api.Entities.MatchType' and 'System.IO.MatchType' [N:\Pickleball\Pcm.Api\Pcm.Api.csproj]
+
+Build FAILED.
+
+N:\Pickleball\Pcm.Api\Controllers\MatchesController.cs(31,25): error CS0104: 'MatchType' is an ambiguous reference between 'Pcm.Api.Entities.MatchType' and 'System.IO.MatchType' [N:\Pickleball\Pcm.Api\Pcm.Api.csproj]
+N:\Pickleball\Pcm.Api\Controllers\MatchesController.cs(341,16): error CS0104: 'MatchType' is an ambiguous reference between 'Pcm.Api.Entities.MatchType' and 'System.IO.MatchType' [N:\Pickleball\Pcm.Api\Pcm.Api.csproj]
+    0 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:01.53

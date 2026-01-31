@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Pcm.Api.Data;
 using Pcm.Api.Entities;
 
@@ -19,7 +20,6 @@ namespace Pcm.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCourts()
         {
-            // Sửa IsActive cho khớp với Entity của bạn
             return Ok(await _context.Courts.Where(c => c.IsActive).ToListAsync());
         }
 
@@ -28,9 +28,9 @@ namespace Pcm.Api.Controllers
         {
             var booked = await _context.Bookings
                 .Where(b => b.CourtId == courtId 
-                         && b.BookingDate.Date == date.Date // Dùng BookingDate (DateTime) để so sánh ngày
+                         && b.BookingDate.Date == date.Date
                          && b.Status != BookingStatus.Cancelled)
-                .Select(b => b.StartTime.Hours) // Dùng .Hours (số nhiều) cho TimeSpan
+                .Select(b => b.StartTime.Hours)
                 .ToListAsync();
             return Ok(booked);
         }
@@ -59,7 +59,6 @@ namespace Pcm.Api.Controllers
             member.WalletBalance -= court.PricePerHour;
             member.TotalSpent += court.PricePerHour;
 
-            // Tạo giờ bắt đầu/kết thúc chuẩn TimeSpan
             var startSpan = new TimeSpan(req.Hour, 0, 0);
             var endSpan = new TimeSpan(req.Hour + 1, 0, 0);
 
@@ -67,8 +66,8 @@ namespace Pcm.Api.Controllers
             {
                 MemberId = req.MemberId,
                 CourtId = req.CourtId,
-                BookingDate = req.Date, // Lưu ngày
-                StartTime = startSpan,  // Lưu giờ (TimeSpan)
+                BookingDate = req.Date,
+                StartTime = startSpan,
                 EndTime = endSpan,
                 TotalPrice = court.PricePerHour,
                 Status = BookingStatus.Confirmed,
@@ -82,7 +81,7 @@ namespace Pcm.Api.Controllers
                 Type = TransactionType.Payment,
                 Description = $"Đặt sân {court.Name} ({req.Hour}h - {req.Hour+1}h)",
                 CreatedDate = DateTime.Now,
-                Status = 1
+                Status = TransactionStatus.Completed
             });
 
             _context.Bookings.Add(booking);
@@ -90,6 +89,61 @@ namespace Pcm.Api.Controllers
 
             return Ok(new { Message = "Đặt sân thành công!", NewBalance = member.WalletBalance });
         }
+
+        // --- Admin Endpoints ---
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateCourt([FromBody] CreateCourtRequest req)
+        {
+            var court = new Court
+            {
+                Name = req.Name,
+                Type = req.Type,
+                PricePerHour = req.PricePerHour,
+                ImageUrl = req.ImageUrl,
+                IsActive = true
+            };
+            _context.Courts.Add(court);
+            await _context.SaveChangesAsync();
+            return Ok(court);
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateCourt(int id, [FromBody] CreateCourtRequest req)
+        {
+            var court = await _context.Courts.FindAsync(id);
+            if (court == null) return NotFound();
+
+            court.Name = req.Name;
+            court.Type = req.Type;
+            court.PricePerHour = req.PricePerHour;
+            if (!string.IsNullOrEmpty(req.ImageUrl)) court.ImageUrl = req.ImageUrl;
+            
+            await _context.SaveChangesAsync();
+            return Ok(court);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteCourt(int id)
+        {
+            var court = await _context.Courts.FindAsync(id);
+            if (court == null) return NotFound();
+            
+            court.IsActive = false; // Soft delete
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+    }
+
+    public class CreateCourtRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = "Standard";
+        public decimal PricePerHour { get; set; }
+        public string? ImageUrl { get; set; }
     }
 
     public class BookingRequest

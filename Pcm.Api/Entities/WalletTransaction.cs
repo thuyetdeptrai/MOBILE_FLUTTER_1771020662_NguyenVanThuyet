@@ -19,7 +19,10 @@ namespace Pcm.Api.Entities
         public string Description { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         
-        // Trạng thái (0: Chờ duyệt, 1: Thành công, 2: Hủy)
-        public int Status { get; set; } = 1; 
+        // Trạng thái (Pending, Completed, Rejected, Failed)
+        public TransactionStatus Status { get; set; } = TransactionStatus.Pending; 
+        
+        // ID liên quan (BookingId, TournamentId...) để truy vết
+        public string? RelatedId { get; set; }
     }
 }

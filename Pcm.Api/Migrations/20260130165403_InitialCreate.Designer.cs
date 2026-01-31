@@ -12,8 +12,8 @@ using Pcm.Api.Data;
 namespace Pcm.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260127083257_UpdateWalletAndTier")]
-    partial class UpdateWalletAndTier
+    [Migration("20260130165403_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,7 +49,7 @@ namespace Pcm.Api.Migrations
                         .HasDatabaseName("RoleNameIndex")
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -74,7 +74,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
+                    b.ToTable("RoleClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -99,7 +99,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
+                    b.ToTable("UserClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -121,7 +121,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
+                    b.ToTable("UserLogins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -136,7 +136,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
+                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -155,7 +155,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
+                    b.ToTable("UserTokens", (string)null);
                 });
 
             modelBuilder.Entity("Pcm.Api.Entities.Booking", b =>
@@ -166,27 +166,24 @@ namespace Pcm.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("CourtId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EndTime")
-                        .HasColumnType("datetime2");
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
 
                     b.Property<string>("MemberId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("ParentBookingId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("RecurrenceRule")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime2");
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -200,9 +197,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasIndex("MemberId");
 
-                    b.HasIndex("ParentBookingId");
-
-                    b.ToTable("662_Bookings", (string)null);
+                    b.ToTable("Bookings");
                 });
 
             modelBuilder.Entity("Pcm.Api.Entities.Court", b =>
@@ -228,31 +223,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("662_Courts", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            IsActive = true,
-                            Name = "Sân 1 (Trong nhà)",
-                            PricePerHour = 150000m
-                        },
-                        new
-                        {
-                            Id = 2,
-                            IsActive = true,
-                            Name = "Sân 2 (Trong nhà)",
-                            PricePerHour = 150000m
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Sân thảm chuẩn quốc tế",
-                            IsActive = true,
-                            Name = "Sân VIP",
-                            PricePerHour = 250000m
-                        });
+                    b.ToTable("Courts");
                 });
 
             modelBuilder.Entity("Pcm.Api.Entities.Member", b =>
@@ -344,54 +315,74 @@ namespace Pcm.Api.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("662_Members", (string)null);
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = "admin-id-123",
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "e0d14c37-a725-430e-86d5-1715c2175ac5",
-                            Email = "admin@pcm.com",
-                            EmailConfirmed = true,
-                            FullName = "Administrator",
-                            JoinDate = new DateTime(2026, 1, 27, 15, 32, 55, 701, DateTimeKind.Local).AddTicks(9894),
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ADMIN@PCM.COM",
-                            NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAELHIaBVNu3azFGVgkE6i5Jl+Db8gKbaSsXiktYikUbcYCmyKFfitg9cp+RDWduLNxg==",
-                            PhoneNumberConfirmed = false,
-                            RankLevel = 3.0,
-                            SecurityStamp = "5db7f389-787b-47c4-91c8-502615732fde",
-                            Tier = "Bronze",
-                            TotalDeposited = 0m,
-                            TotalSpent = 0m,
-                            TwoFactorEnabled = false,
-                            UserName = "admin",
-                            WalletBalance = 0m
-                        },
-                        new
-                        {
-                            Id = "member-id-456",
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "a3be3c87-95cc-4135-8372-2ebdc296bc0f",
-                            Email = "user1@pcm.com",
-                            EmailConfirmed = true,
-                            FullName = "Nguyễn Văn A",
-                            JoinDate = new DateTime(2026, 1, 27, 15, 32, 55, 764, DateTimeKind.Local).AddTicks(1918),
-                            LockoutEnabled = false,
-                            NormalizedEmail = "USER1@PCM.COM",
-                            NormalizedUserName = "USER1",
-                            PasswordHash = "AQAAAAIAAYagAAAAEB3FYXujn4zWRO+b9jvJNzDz1qKd5N1zbrZnhZo+dayfSngZls7emm4nEk2GrD9tVA==",
-                            PhoneNumberConfirmed = false,
-                            RankLevel = 3.0,
-                            SecurityStamp = "a3bcc7fd-309b-437d-b7df-ff24ce4064ec",
-                            Tier = "Bronze",
-                            TotalDeposited = 0m,
-                            TotalSpent = 0m,
-                            TwoFactorEnabled = false,
-                            UserName = "user1",
-                            WalletBalance = 5000000m
-                        });
+            modelBuilder.Entity("Pcm.Api.Entities.Tournament", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("EntryFee")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("MaxParticipants")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("PrizePool")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tournaments");
+                });
+
+            modelBuilder.Entity("Pcm.Api.Entities.TournamentParticipant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("MemberId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("RegisteredDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TournamentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("TournamentId");
+
+                    b.ToTable("TournamentParticipants");
                 });
 
             modelBuilder.Entity("Pcm.Api.Entities.WalletTransaction", b =>
@@ -409,14 +400,12 @@ namespace Pcm.Api.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MemberId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int?>("RelatedBookingId")
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -426,9 +415,7 @@ namespace Pcm.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MemberId");
-
-                    b.ToTable("662_WalletTransactions", (string)null);
+                    b.ToTable("WalletTransactions");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -491,39 +478,38 @@ namespace Pcm.Api.Migrations
                         .IsRequired();
 
                     b.HasOne("Pcm.Api.Entities.Member", "Member")
-                        .WithMany("Bookings")
+                        .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Pcm.Api.Entities.Booking", "ParentBooking")
-                        .WithMany()
-                        .HasForeignKey("ParentBookingId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Court");
 
                     b.Navigation("Member");
-
-                    b.Navigation("ParentBooking");
                 });
 
-            modelBuilder.Entity("Pcm.Api.Entities.WalletTransaction", b =>
+            modelBuilder.Entity("Pcm.Api.Entities.TournamentParticipant", b =>
                 {
                     b.HasOne("Pcm.Api.Entities.Member", "Member")
-                        .WithMany("Transactions")
+                        .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Pcm.Api.Entities.Tournament", "Tournament")
+                        .WithMany("Participants")
+                        .HasForeignKey("TournamentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Member");
+
+                    b.Navigation("Tournament");
                 });
 
-            modelBuilder.Entity("Pcm.Api.Entities.Member", b =>
+            modelBuilder.Entity("Pcm.Api.Entities.Tournament", b =>
                 {
-                    b.Navigation("Bookings");
-
-                    b.Navigation("Transactions");
+                    b.Navigation("Participants");
                 });
 #pragma warning restore 612, 618
         }
