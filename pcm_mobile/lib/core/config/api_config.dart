@@ -6,8 +6,8 @@ class ApiConfig {
   // Android Emulator: 10.0.2.2
   // iOS Simulator: localhost
   // Real device: IP của máy backend (VPS)
-  static const String baseUrl = 'http://103.77.172.159/api/';
-  static const String signalRUrl = 'http://103.77.172.159/pcmHub';
+  static const String baseUrl = 'http://103.77.172.159:8080/api/';
+  static const String signalRUrl = 'http://103.77.172.159:8080/pcmHub';
   
   // Timeout settings
   static const Duration connectTimeout = Duration(seconds: 30);
