@@ -19,8 +19,8 @@ Hệ thống quản lý Pickleball (PCM) đã được triển khai lên VPS và
 1.  Truy cập link [tải APK](http://103.77.172.159/apk/app-release.apk) bằng trình duyệt điện thoại Android.
 2.  Sau khi tải xong, mở file để cài đặt. (Lưu ý: Bạn có thể cần cho phép "Cài đặt từ nguồn không xác định").
 3.  Mở ứng dụng và đăng nhập bằng tài khoản mẫu:
-    - **Admin**: `admin@pcm.vn` / mật khẩu: `Admin@123`
-    - **Thành viên**: `member01@pcm.vn` / mật khẩu: `Member@123`
+    - **Admin**: `admin` / mật khẩu: `Admin@123`
+    - **Thành viên**: `member01` / mật khẩu: `Member@123` (hoặc từ member01 đến member20)
 
 ---
 
